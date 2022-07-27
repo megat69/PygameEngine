@@ -4,6 +4,9 @@ import sys
 
 from tiles import Tile
 
+class _Debug:
+	frames = 0
+
 
 class PygameEngine:
 	def __init__(self, dimensions:tuple=(500, 500), caption:str="", display_fps:bool=True, tile_map:dict=None, tile_size:int=20):
@@ -11,6 +14,7 @@ class PygameEngine:
 		self.clock = pygame.time.Clock()
 		self._caption = caption
 		pygame.display.set_caption(self._caption)
+		self._dimensions = dimensions
 		self.screen = pygame.display.set_mode(dimensions, 0, 32)
 		self.display_fps = display_fps
 		self.tile_map = tile_map if tile_map is not None else {}
@@ -19,6 +23,7 @@ class PygameEngine:
 		# Init vars
 		self.clicking = False
 		self.dt = 0
+		self.position = [0, 0]
 
 	def run(self, update):
 		while True:
@@ -48,29 +53,45 @@ class PygameEngine:
 
 			# ------------- Update ------------- #
 			if self.display_fps is True:
-				pygame.display.set_caption(f"{self._caption}{' - ' if self._caption != '' else ''}FPS : {round(self.clock.get_fps(), 1)}")
+				pygame.display.set_caption(
+					f"{self._caption}{' - ' if self._caption != '' else ''}FPS : {round(self.clock.get_fps(), 1)}"
+				)
 			pygame.display.update()
+			_Debug.frames += 1
 			self.dt = self.clock.tick(60) / 1000
 
 	def render_tiles(self):
 		"""
 		Renders all the tile on the screen.
 		"""
+		# Counts the amount of tiles rendered
+		if "--debug" in sys.argv: tiles_rendered = 0
+
 		# Fetches all tiles in the tilemap
 		for tile_pos, tile in self.tile_map.items():
 			# Skips the tile if it is not enabled.
 			if tile.enabled is False: continue
 
-			# Gets the tile position from the tilemap key
+			# Gets the tile position from the tilemap key minus the position of the window
 			tile_pos = tile_pos.split(";")
-			x, y = int(tile_pos[0]), int(tile_pos[1])
+			x, y = int(tile_pos[0]) * self.tile_size, int(tile_pos[1]) * self.tile_size
+
+			# Culling the camera : if the tile is not in view, do not draw it
+			if x + self.tile_size < 0 or y + self.tile_size < 0 or x > self._dimensions[0] or y > self._dimensions[1]:
+				continue
+
+			# Counts the tile if rendered
+			if "--debug" in sys.argv: tiles_rendered += 1
 
 			# Draws the tile onto the screen
 			pygame.draw.rect(
 				self.screen,
 				tile.color,
-				pygame.Rect(x * self.tile_size, y * self.tile_size,self.tile_size, self.tile_size)
+				pygame.Rect(x, y, self.tile_size, self.tile_size)
 			)
+
+		# Logs the amount of tiles rendered
+		if "--debug" in sys.argv: print(f"{tiles_rendered} tiles rendered on frame {_Debug.frames}")
 
 
 if __name__ == '__main__':
@@ -86,11 +107,15 @@ if __name__ == '__main__':
 	}
 	for i in range(12, 30):
 		tilemap[str(i)+";14"] = Tile(GREEN, False)
-		tilemap[str(i)+";15"] = Tile(GREEN)
+		tilemap[str(i)+";15"] = Tile((0, 255 - i * 5, 0))
 
 	app.tile_map = tilemap
 
+	from math import sin
 	def update(self):
-		pass
+		if self.clicking:
+			self.position[0] += self.dt
+		else:
+			self.position[0] -= self.dt
 
 	app.run(update)
