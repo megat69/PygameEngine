@@ -2,6 +2,7 @@ import pygame; pygame.init()  # Pygame import
 from pygame.locals import *
 import sys
 
+from settings import SETTINGS
 from tiles import Tile
 
 class _Debug:
@@ -97,7 +98,7 @@ class PygameEngine:
 
 
 if __name__ == '__main__':
-	app = PygameEngine((720, 480), "Hello World !", tile_size=20)
+	app = PygameEngine(tuple(SETTINGS.graphics.dimensions), "Hello World !", tile_size=SETTINGS.graphics.tile_size)
 
 	WHITE = (255, 255, 255)
 	RED = (255, 0, 0)
@@ -113,7 +114,6 @@ if __name__ == '__main__':
 
 	app.tile_map = tilemap
 
-	from math import sin
 	def update(self):
 		if self.clicking:
 			self.position[0] += self.dt * 100
