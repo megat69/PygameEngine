@@ -45,7 +45,7 @@ class PygameEngine:
 					if event.button == 1:
 						self.clicking = False
 
-			# ------------- Tiles rendering ---------------------------------------------------------------------------------- #
+			# ------------- Tiles rendering ------------- #
 			self.render_tiles()
 
 			# ------------- Client update ------------- #
@@ -54,7 +54,8 @@ class PygameEngine:
 			# ------------- Update ------------- #
 			if self.display_fps is True:
 				pygame.display.set_caption(
-					f"{self._caption}{' - ' if self._caption != '' else ''}FPS : {round(self.clock.get_fps(), 1)}"
+					f"{self._caption}{' - ' if self._caption != '' else ''}FPS : {round(self.clock.get_fps(), 1)}"\
+					+ (f" - {self.tiles_rendered} tiles rendered" if "--debug" in sys.argv else "")
 				)
 			pygame.display.update()
 			_Debug.frames += 1
@@ -65,7 +66,7 @@ class PygameEngine:
 		Renders all the tile on the screen.
 		"""
 		# Counts the amount of tiles rendered
-		if "--debug" in sys.argv: tiles_rendered = 0
+		if "--debug" in sys.argv: self.tiles_rendered = 0
 
 		# Fetches all tiles in the tilemap
 		for tile_pos, tile in self.tile_map.items():
@@ -74,14 +75,15 @@ class PygameEngine:
 
 			# Gets the tile position from the tilemap key minus the position of the window
 			tile_pos = tile_pos.split(";")
-			x, y = int(tile_pos[0]) * self.tile_size, int(tile_pos[1]) * self.tile_size
+			x, y = int(tile_pos[0]) * self.tile_size - self.position[0], \
+			       int(tile_pos[1]) * self.tile_size - self.position[1]
 
 			# Culling the camera : if the tile is not in view, do not draw it
 			if x + self.tile_size < 0 or y + self.tile_size < 0 or x > self._dimensions[0] or y > self._dimensions[1]:
 				continue
 
 			# Counts the tile if rendered
-			if "--debug" in sys.argv: tiles_rendered += 1
+			if "--debug" in sys.argv: self.tiles_rendered += 1
 
 			# Draws the tile onto the screen
 			pygame.draw.rect(
@@ -91,7 +93,7 @@ class PygameEngine:
 			)
 
 		# Logs the amount of tiles rendered
-		if "--debug" in sys.argv: print(f"{tiles_rendered} tiles rendered on frame {_Debug.frames}")
+		if "--debug" in sys.argv: print(f"{self.tiles_rendered} tiles rendered on frame {_Debug.frames}")
 
 
 if __name__ == '__main__':
@@ -114,8 +116,8 @@ if __name__ == '__main__':
 	from math import sin
 	def update(self):
 		if self.clicking:
-			self.position[0] += self.dt
+			self.position[0] += self.dt * 100
 		else:
-			self.position[0] -= self.dt
+			self.position[0] -= self.dt * 100
 
 	app.run(update)
